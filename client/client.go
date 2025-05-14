@@ -7,12 +7,12 @@ import (
 )
 
 func main() {
-	fmt.Println("---- CLIENT START ----")
-	defer fmt.Println("\n---- CLIENT END ----")
+	fmt.Println("\n ########## Client iniciando ########## \n ")
+	defer fmt.Println("\n\n ########## Client finalizado ########## \n ")
 
 	dollarQuote, err := serverClient.GetDollarQuote()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Print("Oops, ocorreu um erro: ", err)
 		return
 	}
 

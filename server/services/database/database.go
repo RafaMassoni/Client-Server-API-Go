@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 	"server/model/tableModel"
 	"time"
@@ -11,6 +13,7 @@ import (
 )
 
 func getDatabase() (*sql.DB, error) {
+
 	db, err := sql.Open("sqlite", "./quotes.db")
 	if err != nil {
 		log.Fatal(err)
@@ -20,6 +23,8 @@ func getDatabase() (*sql.DB, error) {
 }
 
 func InitDataBase() {
+
+	println("O banco de dados está inicializando")
 
 	db, err := getDatabase()
 
@@ -48,20 +53,22 @@ func InitDataBase() {
 		log.Printf("ID: %d, Quote: %s\n", quote.ID, quote.DollarValue)
 	}
 
+	println("O banco de dados foi inicializado com sucesso")
+	println("")
 }
 
-func InsertDollarQuote(dollarQuote tableModel.DollarQuote) {
-
+func InsertDollarQuote(dollarQuote tableModel.DollarQuote) error {
 	db, err := getDatabase()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Erro ao obter conexão com o banco de dados:", err)
+		return fmt.Errorf("falha ao conectar no banco de dados: %w", err)
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("INSERT INTO quote_dollar(quote) VALUES(?)")
 	if err != nil {
-		log.Println("Erro ao gerar query")
-		log.Fatal(err)
+		log.Println("Erro ao preparar a query de inserção:", err)
+		return fmt.Errorf("erro ao preparar query SQL: %w", err)
 	}
 	defer stmt.Close()
 
@@ -70,12 +77,16 @@ func InsertDollarQuote(dollarQuote tableModel.DollarQuote) {
 
 	_, err = stmt.ExecContext(ctx, dollarQuote.DollarValue)
 	if err != nil {
-		log.Println("Erro ao executar query")
-		log.Fatal(err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			log.Println("tempo limite excedido para inserir cotação no banco")
+			return fmt.Errorf("tempo limite excedido para inserir cotação no banco: %w", err)
+		}
+		log.Println("Erro ao executar a query de inserção:", err)
+		return fmt.Errorf("erro ao inserir cotação no banco: %w", err)
 	}
 
-	log.Println("Registro inserido com sucesso: DollarValue -> ", dollarQuote.DollarValue)
-
+	log.Println("Registro inserido com sucesso: DollarValue ->", dollarQuote.DollarValue)
+	return nil
 }
 
 func getAllDollarQuotes() ([]tableModel.DollarQuote, error) {

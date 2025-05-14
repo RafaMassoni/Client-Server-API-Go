@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-
+	println("")
+	println("O servidor está em processo de inicialização")
 	database.InitDataBase()
 	handler.InitHandlers()
-
 }
